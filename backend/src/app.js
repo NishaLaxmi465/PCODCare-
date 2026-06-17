@@ -17,22 +17,29 @@ const { notFound, errorHandler } = require('./middleware/errorHandler');
 const app = express();
 
 app.use(helmet());
-const allowedOrigins = [
-  'https://pcod-care.vercel.app',
-  'https://pcod-care-nu.vercel.app',
-  'http://localhost:5174'
-];
+app.use(helmet());
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow server-to-server or tools like Postman (where origin is undefined)
+      // 1. Allow mobile apps, curl, or server-to-server testing (no origin)
       if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Blocked by CORS security policy'));
+
+      // 2. Allow local development
+      if (origin === 'http://localhost:5174' || origin === 'http://localhost:5173') {
+        return callback(null, true);
       }
+
+      // 3. Match any Vercel URL belonging to your project domain
+      // This checks if the origin starts with 'https://pcod-care' and ends with '.vercel.app'
+      const isVercelDomain = origin.startsWith('https://pcod-care') && origin.endsWith('.vercel.app');
+
+      if (isVercelDomain) {
+        return callback(null, true);
+      }
+      
+      // If it doesn't match anything above, block it
+      return callback(new Error('Blocked by CORS security policy'));
     },
     credentials: true,
   }),
