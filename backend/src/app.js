@@ -17,9 +17,23 @@ const { notFound, errorHandler } = require('./middleware/errorHandler');
 const app = express();
 
 app.use(helmet());
+const allowedOrigins = [
+  'https://pcod-care.vercel.app',
+  'https://pcod-care-nu.vercel.app',
+  'http://localhost:5174'
+];
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || 'http://localhost:5174',
+    origin: function (origin, callback) {
+      // Allow server-to-server or tools like Postman (where origin is undefined)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Blocked by CORS security policy'));
+      }
+    },
     credentials: true,
   }),
 );
